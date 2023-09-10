@@ -23,7 +23,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mini_project_main = mini_project.mini_project_main:main'
+            'mini_project_main = mini_project.drive_square:main'
         ],
     },
 )
