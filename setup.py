@@ -23,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mini_project_main = mini_project.drive_square:main'
+            'drive_square = mini_project.drive_square:main',
+            'teleop = mini_project.teleop:main',
         ],
     },
 )
