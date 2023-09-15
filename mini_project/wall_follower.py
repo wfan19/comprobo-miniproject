@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node, Publisher, Subscription, Service
 
-from geometry_msgs.msg import Vector3, Point
+from geometry_msgs.msg import Vector3, Point, Twist
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import ColorRGBA
 from std_srvs.srv import Empty
@@ -11,18 +11,76 @@ import numpy as np
 import numpy.matlib
 import matplotlib.pyplot as plt
 
+def twist_v_to_msg(v_twist: np.ndarray) -> Twist:
+    twist_out = Twist()
+
+    v_twist.dtype = float
+
+    twist_out.linear.x = v_twist[0]
+    twist_out.linear.y = v_twist[1]
+    twist_out.linear.z = v_twist[2]
+    twist_out.angular.x = v_twist[3]
+    twist_out.angular.y = v_twist[4]
+    twist_out.angular.z = v_twist[5]
+
+    return twist_out
+
 class WallFollowerNode(Node):
 
     scan_sub: Subscription = None
     hough_serv: Service = None
     marker_pub: Publisher = None
+    twist_pub: Publisher = None
     current_scan_points: np.ndarray = None
+
+    wall: np.ndarray = np.array([0, 0])
+    
+    last_rho_error = 0
     
     def __init__(self):
         super().__init__("WallFollowerNode")
         self.scan_sub = self.create_subscription(LaserScan, "/scan", self.on_scan, 10)
         self.hough_serv = self.create_service(Empty, "/plot_hough", self.plot_hough)
         self.marker_pub = self.create_publisher(Marker, "/wall_marker", 10)
+        self.twist_pub = self.create_publisher(Twist, "/cmd_vel", 2)
+
+        control_hz = 50;
+        self.timer = self.create_timer(1/control_hz, self.on_timer)
+
+    def on_timer(self):
+        ## Compute current control output
+        # Fetch the robot horizontal distance to wall, which is the Rho parameter of the wall line
+        dist_to_wall = self.wall[0]
+
+        # Check if the wall is on our left or right side based on the theta parameter
+        wall_side = -1 if (self.wall[1] < np.pi/2 or self.wall[1] > 3*np.pi/2) else 1
+        signed_dist_to_wall = dist_to_wall * wall_side
+
+        rho_goal = 0.4
+        rho_error = rho_goal - signed_dist_to_wall
+
+        r_goal = np.exp(self.wall[1]*1j)
+        r_self = np.exp(0*1j)
+        r_diff = r_goal / r_self
+        theta_error = np.imag(np.log(r_diff)) % 3.14
+
+        # Compute the heading setpoint (outer loop)
+        # kP_theta = -0.5
+        kP_theta = -1
+        kP_rho = -2
+        kD_rho = -3
+
+        print(f"Theta: {self.wall[1]}, Rho: {signed_dist_to_wall}")
+        print(f"Theta error: {theta_error}, Rho error: {rho_error}")
+
+        # Compute the angular velocity setpoint (inner loop)
+        omega = kP_theta * theta_error + kP_rho * rho_error + kD_rho * (rho_error - self.last_rho_error) * (1/50)
+        self.last_rho_error = rho_error
+
+        # Publish the message
+        v = 0.15
+        twist_out = twist_v_to_msg(np.array([v, 0, 0, 0, 0, omega]))
+        self.twist_pub.publish(twist_out)
     
     def on_scan(self, scan_msg):
         rs = np.array(scan_msg.ranges)
@@ -43,10 +101,16 @@ class WallFollowerNode(Node):
 
         # # Publish markers for the wall that we've detected
         rho_wall, theta_wall, _1, _2 = self.hough_tform()
+
+        theta_wall += np.pi     # Transform the wall from scanner-frame to world frame
+
         x_range = [np.min(xy[0, :]), np.max(xy[0, :])]
         wall_x = np.linspace(x_range[0], x_range[1], 100)
-        wall_y = 1/np.cos(theta_wall) * (-np.sin(theta_wall) * wall_x - rho_wall)   # NOTE: Idk why but here the rho needs to be negative.
+        wall_y = 1/np.cos(theta_wall) * (-np.sin(theta_wall) * wall_x + rho_wall)
 
+        self.wall = np.array([rho_wall, theta_wall])
+
+        # Flip it to align the frame with the robot frame
         points = [Point(x=x, y=y, z=0.0) for (x, y) in zip(wall_x, wall_y)]
 
         marker_out = Marker(
@@ -56,7 +120,6 @@ class WallFollowerNode(Node):
             action=Marker.ADD,
             header = scan_msg.header,
             points = points,
-            # color = ColorRGBA(a=1., r=0., g=1., b=0.),
             colors = [ColorRGBA(a=1., r=0., g=1., b=0.) for i in range(len(points))],
             scale = Vector3(x=.2, y=.2, z=.2)
         )
