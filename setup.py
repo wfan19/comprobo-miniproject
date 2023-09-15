@@ -25,7 +25,8 @@ setup(
         'console_scripts': [
             'drive_square = mini_project.drive_square:main',
             'teleop = mini_project.teleop:main',
-            'wall_follower = mini_project.wall_follower:main'
+            'wall_follower = mini_project.wall_follower:main',
+            'person_follower = mini_project.person_follower:main'
         ],
     },
 )
