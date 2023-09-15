@@ -59,7 +59,10 @@ class WallFollowerNode(Node):
         rho_goal = 0.4
         rho_error = rho_goal - signed_dist_to_wall
 
-        r_goal = np.exp(self.wall[1]*1j)
+        theta = self.wall[1]
+        if dist_to_wall < 0:
+            theta = theta - np.pi
+        r_goal = np.exp((self.wall[1] % np.pi) *1j)
         r_self = np.exp(0*1j)
         r_diff = r_goal / r_self
         theta_error = np.imag(np.log(r_diff)) % 3.14
@@ -70,7 +73,7 @@ class WallFollowerNode(Node):
         kP_rho = -2
         kD_rho = -3
 
-        print(f"Theta: {self.wall[1]}, Rho: {signed_dist_to_wall}")
+        print(f"Theta: {theta}, Rho: {signed_dist_to_wall} Rho raw: {dist_to_wall}")
         print(f"Theta error: {theta_error}, Rho error: {rho_error}")
 
         # Compute the angular velocity setpoint (inner loop)
