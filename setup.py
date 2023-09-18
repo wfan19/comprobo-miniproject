@@ -26,6 +26,7 @@ setup(
             'drive_square = mini_project.drive_square:main',
             'teleop = mini_project.teleop:main',
             'wall_follower = mini_project.wall_follower:main',
+            'wall_detector = mini_project.wall_detector:main',
             'person_follower = mini_project.person_follower:main'
         ],
     },
