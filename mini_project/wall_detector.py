@@ -76,6 +76,8 @@ class WallDetector(Node):
             scale = Vector3(x=.2, y=.2, z=.2)
         )
 
+        rho_wall = -rho_wall # Flip it back again for some reason
+
         self.marker_pub.publish(marker_out)
         self.rho_pub.publish(Float32(data=rho_wall))
         self.theta_pub.publish(Float32(data=theta_wall))

@@ -56,16 +56,8 @@ class WallFollowerNode(Node):
         # Check if the wall is on our left or right side based on the theta parameter
         wall_side = -1 if self.theta > np.pi else 1
 
-        rho_goal = wall_side * 0.4
+        rho_goal = wall_side * 0.5
         rho_error = rho_goal - self.rho
-
-        # theta = self.wall[1]
-        # if dist_to_wall < 0:
-        #     theta = theta - np.pi
-        # r_goal = np.exp((self.wall[1] % np.pi) *1j)
-        # r_self = np.exp(0*1j)
-        # r_diff = r_goal / r_self
-        # theta_error = np.imag(np.log(r_diff)) % 3.14
 
         theta_goal = np.pi/2
         theta_error = theta_goal - self.theta
@@ -73,7 +65,7 @@ class WallFollowerNode(Node):
         # Compute the heading setpoint (outer loop)
         # kP_theta = -0.5
         kP_theta = -0
-        kP_rho = -1
+        kP_rho = -0.3
         kD_rho = 0
 
         print(f"Theta: {self.theta}, Rho: {self.rho} Rho raw: {self.rho}")
