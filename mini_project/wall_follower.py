@@ -38,10 +38,10 @@ class WallFollowerNode(Node):
     def __init__(self):
         super().__init__("WallFollowerNode")
         
-        self.rho_sub =self.create_subscription(Float32, "/wall/rho", self.on_rho, 10)
-        self.theta_sub = self.create_subscription(Float32, "/wall/theta", self.on_theta, 10)
+        self.rho_sub =self.create_subscription(Float32, "/wall/rho", self.on_rho, 3)
+        self.theta_sub = self.create_subscription(Float32, "/wall/theta", self.on_theta, 3)
 
-        control_hz = 50;
+        control_hz = 5;
         self.timer = self.create_timer(1/control_hz, self.on_timer)
         self.twist_pub = self.create_publisher(Twist, "/cmd_vel", 2)
 
@@ -56,29 +56,30 @@ class WallFollowerNode(Node):
         # Check if the wall is on our left or right side based on the theta parameter
         wall_side = -1 if self.theta > np.pi else 1
 
-        rho_goal = wall_side * 0.5
+        rho_goal = wall_side * 0.6
         rho_error = rho_goal - self.rho
 
         theta_goal = np.pi/2
         theta_error = theta_goal - self.theta
+        d_error = (rho_error - self.last_rho_error)
 
         # Compute the heading setpoint (outer loop)
         # kP_theta = -0.5
-        kP_theta = -0
-        kP_rho = -0.3
-        kD_rho = 0
+        kP_theta = -1
+        kP_rho = -0.8 * wall_side
+        kD_rho = -20
 
         print(f"Theta: {self.theta}, Rho: {self.rho} Rho raw: {self.rho}")
-        print(f"Theta error: {theta_error}, Rho error: {rho_error}")
+        print(f"Theta error: {theta_error}, Rho error: {rho_error}, d_rho_error: {d_error}")
 
         # Compute the angular velocity setpoint (inner loop)
-        omega = kP_theta * theta_error + kP_rho * rho_error + kD_rho * (rho_error - self.last_rho_error) * (1/50)
-        self.last_rho_error = rho_error
+        omega = kP_theta * theta_error + kP_rho * rho_error + kD_rho * d_error
 
         # Publish the message
-        v = 0.15
+        v = 0.1
         twist_out = twist_v_to_msg(np.array([v, 0, 0, 0, 0, omega]))
         self.twist_pub.publish(twist_out)
+        self.last_rho_error = rho_error
 
 def main():
     rclpy.init()
