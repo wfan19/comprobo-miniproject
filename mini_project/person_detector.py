@@ -26,19 +26,24 @@ class PersonDetector(Node):
         rs = np.array(scan_msg.ranges)
         thetas = np.linspace(0, 2*np.pi, len(rs))
 
+        # Only save scan points that are not immediately on the robot (noisey)
         i_far_enough = rs > 0.2
         rs = rs[i_far_enough]
         thetas = thetas[i_far_enough]
 
+        # Remove inf values
         i_not_inf = ~np.isinf(rs)
         rs = rs[i_not_inf]
         thetas = thetas[i_not_inf]
 
+        # Convert lidar scan points into rectangular
         xs = np.cos(thetas) * rs
         ys = np.sin(thetas) * rs
         xy = np.array([xs, ys])
         self.current_scan_points = xy
+        xy = np.diag([-1, -1]) @ xy     # 180 degree rotation matrix to align laser scan frame to robot frame
 
+        # Only save scan points within a region infront of the robot
         search_x = [-0.5, 5]
         search_y = [-3, 3]
 
@@ -46,15 +51,16 @@ class PersonDetector(Node):
         in_y = (xy[1, :] > search_y[0]) & (xy[0, :] < search_y[1])
         in_bounds = in_x & in_y
 
-        xy = np.diag([-1, -1]) @ xy     # 180 degree rotation matrix to align laser scan frame to robot frame
         xy_in_bounds = xy[:, in_bounds]
 
         if np.any(xy_in_bounds):
+            # Target is mean position of all points in box
             means = np.average(xy_in_bounds, axis=1)
 
             person_x = means[0]
             person_y = means[1]
         else:
+            # No points in bounds, so just place target on robot
             person_x = 0.
             person_y = 0.
 

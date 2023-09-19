@@ -48,11 +48,13 @@ class DriveSquareNode(Node):
         timer_period = 1/20;
         self.timer = self.create_timer(timer_period, self.timer_tick)
 
+        # Functions to call while in each state
         self.state_funcs = {
             "forward": self.exec_forward,
             "turning": self.exec_turning,
         }
 
+        # Functions to call when exiting each state
         self.exit_funcs = {
             "forward": self.exit_forward,
             "turning": self.exit_turning,
@@ -64,10 +66,12 @@ class DriveSquareNode(Node):
         
         max_state_time = self.max_state_times[self.state]
         if state_time > max_state_time: 
+            # We have stayed in this state for long enough - time to transition.
             # Call the corresponding state transition function
             self.exit_funcs[self.state]()
             self.last_state_change_time = now
         else:
+            # We are still in the state. Execute the state behavior function.
             # Call the corresponding state-execution function
             self.state_funcs[self.state]()
 

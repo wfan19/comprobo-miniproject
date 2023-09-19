@@ -9,6 +9,7 @@ import numpy.matlib
 import matplotlib.pyplot as plt
 
 def twist_v_to_msg(v_twist: np.ndarray) -> Twist:
+    # Convert a 6D numpy array twist vector into a ROS twist message.
     twist_out = Twist()
 
     v_twist.dtype = float
@@ -56,12 +57,13 @@ class WallFollowerNode(Node):
         # Check if the wall is on our left or right side based on the theta parameter
         wall_side = -1 if self.theta > np.pi else 1
 
-        rho_goal = wall_side * 0.6
-        rho_error = rho_goal - self.rho
+        rho_goal = wall_side * 0.6                      # 0.6m distance to wall, and then flip sign based on side
+        rho_error = rho_goal - self.rho                 # Proportional term error
 
-        theta_goal = np.pi/2
-        theta_error = theta_goal - self.theta
-        d_error = (rho_error - self.last_rho_error)
+        # Compute control for heading
+        theta_goal = np.pi/2                            # See hough-transform rho-theta parameterizaion for explanation
+        theta_error = theta_goal - self.theta           # For P term
+        d_error = (rho_error - self.last_rho_error)     # For d term
 
         # Compute the heading setpoint (outer loop)
         # kP_theta = -0.5

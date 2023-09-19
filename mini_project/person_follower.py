@@ -53,8 +53,9 @@ class WallFollowerNode(Node):
         person_rtheta = np.array([r, theta])
         d_rtheta = person_rtheta - self.last_person_rtheta
         
+        # For PD control, our state ends up being [rho, theta, rho_dot, theta_dot]
         state = np.concatenate([person_rtheta, d_rtheta])
-        target_state = np.array([0, 0, 0, 0])
+        target_state = np.array([0, 0, 0, 0])       # We want all of those values to go to 0
         error = target_state - state
 
         K_v = np.array([-0.4, 0, 0.05, 0])      # K_p_r, K_p_theta, K_d_r, K_d_theta
