@@ -9,15 +9,18 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 import numpy as np
 
-class PersonFollower(Node):
+class PersonDetector(Node):
 
     current_scan_points: np.ndarray
-    scan_pub: Subscription = None
+    scan_sub: Subscription = None
+    marker_pub: Publisher = None
+    person_pub: Publisher = None
 
     def __init__(self):
-        super().__init__("PersonFollowerNode")
+        super().__init__("PersonDetectorNode")
         self.scan_sub = self.create_subscription(LaserScan, "/scan", self.on_scan, 10)
-        self.marker_pub = self.create_publisher(Marker, "/wall_marker", 10)
+        self.marker_pub = self.create_publisher(Marker, "/marker", 10)
+        self.person_pub = self.create_publisher(Point, "/person", 10)
     
     def on_scan(self, scan_msg):
         rs = np.array(scan_msg.ranges)
@@ -65,11 +68,12 @@ class PersonFollower(Node):
         )
 
         self.marker_pub.publish(marker_out)
+        self.person_pub.publish(Point(x=person_x, y=person_y, z=0.))
 
 def main():
     rclpy.init()
 
-    node = PersonFollower()
+    node = PersonDetector()
     rclpy.spin(node)
     
     node.destroy_node()

@@ -29,7 +29,7 @@ class WallDetector(Node):
         super().__init__("WallFollowerNode")
         self.scan_sub = self.create_subscription(LaserScan, "/scan", self.on_scan, 10)
         self.hough_serv = self.create_service(Empty, "/plot_hough", self.plot_hough)
-        self.marker_pub = self.create_publisher(Marker, "/wall_marker", 10)
+        self.marker_pub = self.create_publisher(Marker, "/marker", 10)
 
         self.rho_pub = self.create_publisher(Float32, "/wall/rho", 10)
         self.theta_pub = self.create_publisher(Float32, "/wall/theta", 10)

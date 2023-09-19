@@ -281,14 +281,14 @@ Visualization Manager:
       Enabled: true
       Name: Marker
       Namespaces:
-        /wall_markers: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /wall_marker
+        Value: /marker
       Value: true
   Enabled: true
   Global Options:
