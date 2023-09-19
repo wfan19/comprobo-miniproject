@@ -39,20 +39,24 @@ class PersonDetector(Node):
         xy = np.array([xs, ys])
         self.current_scan_points = xy
 
-        search_x = [0.5, 2]
+        search_x = [0.5, 5]
         search_y = [-3, 3]
 
         in_x = (xy[0, :] > search_x[0]) & (xy[0, :] < search_x[1])
         in_y = (xy[1, :] > search_y[0]) & (xy[0, :] < search_y[1])
         in_bounds = in_x & in_y
 
-        xy = np.diag([-1, -1]) @ xy
+        xy = np.diag([-1, -1]) @ xy     # 180 degree rotation matrix to align laser scan frame to robot frame
         xy_in_bounds = xy[:, in_bounds]
-        means = np.average(xy_in_bounds, axis=1)
 
-        # Flip it to align the frame with the robot frame
-        person_x = means[0]
-        person_y = means[1]
+        if np.any(xy_in_bounds):
+            means = np.average(xy_in_bounds, axis=1)
+
+            person_x = means[0]
+            person_y = means[1]
+        else:
+            person_x = 0.
+            person_y = 0.
 
         self.target = np.array([person_x, person_y])
 
