@@ -58,7 +58,7 @@ class WallFollowerNode(Node):
         error = target_state - state
 
         K_v = np.array([-0.4, 0, 0.05, 0])      # K_p_r, K_p_theta, K_d_r, K_d_theta
-        K_omega = np.array([0, 0.05, 0, 0.1])   # K_p_r, K_p_theta, K_d_r, K_d_theta 
+        K_omega = np.array([0, 0.2, 0, 0.1])   # K_p_r, K_p_theta, K_d_r, K_d_theta 
 
         v_x =  K_v @ error
         omega =  K_omega @ error

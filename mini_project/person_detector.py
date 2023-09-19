@@ -39,7 +39,7 @@ class PersonDetector(Node):
         xy = np.array([xs, ys])
         self.current_scan_points = xy
 
-        search_x = [0.5, 5]
+        search_x = [-0.5, 5]
         search_y = [-3, 3]
 
         in_x = (xy[0, :] > search_x[0]) & (xy[0, :] < search_x[1])
